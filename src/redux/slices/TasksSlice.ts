@@ -1,6 +1,9 @@
-// src/redux/slices/tasksSlice.ts
-
-import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit'
+import {
+  createSlice,
+  createAsyncThunk,
+  PayloadAction,
+} from '@reduxjs/toolkit'
+import api from '../../api/axios'
 
 export interface Task {
   id: string
@@ -19,16 +22,12 @@ const initialState: TasksState = {
   status: 'idle',
 }
 
-/**
- * Aqui você pode adicionar os thunks reais, 
- * mas por enquanto iremos só mockar um fetch vazio:
- */
+// thunk para GET /tasks
 export const fetchTasks = createAsyncThunk<Task[]>(
   'tasks/fetch',
   async () => {
-    // simula um delay e retorna lista vazia
-    await new Promise(res => setTimeout(res, 300))
-    return []
+    const resp = await api.get<Task[]>('/tasks')
+    return resp.data
   }
 )
 
@@ -36,10 +35,27 @@ const tasksSlice = createSlice({
   name: 'tasks',
   initialState,
   reducers: {
-    // ex.: addTask, removeTask, toggleComplete...
+    // Para criação rápida sem API:
     addTask(state, action: PayloadAction<Task>) {
       state.items.push(action.payload)
-    }
+    },
+    updateTask(
+      state,
+      action: PayloadAction<{ id: string; changes: Partial<Omit<Task, 'id'>> }>
+    ) {
+      const { id, changes } = action.payload
+      const idx = state.items.findIndex(t => t.id === id)
+      if (idx !== -1) {
+        state.items[idx] = { ...state.items[idx], ...changes }
+      }
+    },
+    deleteTask(state, action: PayloadAction<string>) {
+      state.items = state.items.filter(t => t.id !== action.payload)
+    },
+    toggleComplete(state, action: PayloadAction<string>) {
+      const t = state.items.find(t => t.id === action.payload)
+      if (t) t.completed = !t.completed
+    },
   },
   extraReducers: builder => {
     builder
@@ -53,8 +69,9 @@ const tasksSlice = createSlice({
       .addCase(fetchTasks.rejected, state => {
         state.status = 'failed'
       })
-  }
+  },
 })
 
-export const { addTask } = tasksSlice.actions
+export const { addTask, updateTask, deleteTask, toggleComplete } =
+  tasksSlice.actions
 export default tasksSlice.reducer

@@ -16,10 +16,10 @@ export default function LoginScreen({ navigation }: any) {
 
   const handleLogin = async (values: { email: string; password: string }) => {
     try {
-      // despacha o thunk e aguarda o token
+     
       await dispatch(loginThunk(values)).unwrap()
-      // se der certo, navega para as tabs
-      navigation.replace('Lista')  // ou o nome da sua Tab inicial
+     
+      navigation.replace('Lista')  
     } catch (err: any) {
       Alert.alert('Erro ao logar', err.message || 'Tente novamente')
     }

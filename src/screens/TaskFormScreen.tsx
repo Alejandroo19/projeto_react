@@ -1,6 +1,6 @@
 // src/screens/TaskFormScreen.tsx
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import {
   View,
   Text,
@@ -11,34 +11,73 @@ import {
 } from 'react-native'
 import { Formik } from 'formik'
 import * as Yup from 'yup'
-import { useAppDispatch } from '../redux/Hooks'
-import { addTask, Task } from '../redux/slices/TasksSlice'
+import { useAppDispatch, useAppSelector } from '../redux/Hooks'
+import {
+  addTask,
+  updateTask,
+  Task,
+} from '../redux/slices/TasksSlice'
 
 const TaskSchema = Yup.object().shape({
   title: Yup.string().required('Obrigatório'),
   description: Yup.string(),
 })
 
-export default function TaskFormScreen({ navigation }: any) {
+export default function TaskFormScreen({ navigation, route }: any) {
   const dispatch = useAppDispatch()
+  const { mode, taskId } = route.params as {
+    mode: 'create' | 'edit'
+    taskId?: string
+  }
+
+
+  const task = useAppSelector(s =>
+    s.tasks.items.find(t => t.id === taskId)
+  )
+
+
+  const initialValues =
+    mode === 'edit' && task
+      ? { title: task.title, description: task.description || '' }
+      : { title: '', description: '' }
+
 
   const handleSubmit = (values: { title: string; description: string }) => {
-    const newTask: Task = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: values.title,
-      description: values.description,
-      completed: false,
+    if (mode === 'create') {
+      const newTask: Task = {
+        id: Math.random().toString(36).substr(2, 9),
+        title: values.title,
+        description: values.description,
+        completed: false,
+      }
+      dispatch(addTask(newTask))
+      Alert.alert('Sucesso', 'Tarefa criada!')
+    } else {
+      dispatch(
+        updateTask({
+          id: taskId!,
+          changes: {
+            title: values.title,
+            description: values.description,
+          },
+        })
+      )
+      Alert.alert('Sucesso', 'Tarefa atualizada!')
     }
-    dispatch(addTask(newTask))
-    Alert.alert('Sucesso', 'Tarefa criada!')
     navigation.goBack()
   }
 
+
+  useEffect(() => {
+    navigation.setOptions({
+      title: mode === 'create' ? 'Nova Tarefa' : 'Editar Tarefa',
+    })
+  }, [mode, navigation])
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Nova Tarefa</Text>
       <Formik
-        initialValues={{ title: '', description: '' }}
+        initialValues={initialValues}
         validationSchema={TaskSchema}
         onSubmit={handleSubmit}
       >
@@ -78,7 +117,9 @@ export default function TaskFormScreen({ navigation }: any) {
               style={styles.button}
               onPress={() => handleSubmit()}
             >
-              <Text style={styles.buttonText}>Criar Tarefa</Text>
+              <Text style={styles.buttonText}>
+                {mode === 'create' ? 'Criar Tarefa' : 'Salvar Alterações'}
+              </Text>
             </TouchableOpacity>
           </>
         )}
@@ -89,20 +130,19 @@ export default function TaskFormScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 24, backgroundColor: '#fff' },
-  title:     { fontSize: 24, marginBottom: 16, textAlign: 'center' },
-  input:     {
+  input: {
     borderWidth: 1,
     borderColor: '#999',
     borderRadius: 4,
     padding: 12,
     marginBottom: 8,
   },
-  error:     { color: '#cc0000', marginBottom: 8 },
-  button:    {
+  error: { color: '#cc0000', marginBottom: 8 },
+  button: {
     backgroundColor: '#0063DE',
     padding: 12,
     borderRadius: 4,
     marginTop: 12,
   },
-  buttonText:{ color: '#fff', textAlign: 'center', fontWeight: '600' },
+  buttonText: { color: '#fff', textAlign: 'center', fontWeight: '600' },
 })

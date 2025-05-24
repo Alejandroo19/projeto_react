@@ -5,9 +5,8 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'reac
 import { Formik } from 'formik'
 import * as Yup from 'yup'
 import { useAppDispatch } from '../redux/Hooks'
-// import { signupThunk } from '../redux/slices/authSlice'  // mais à frente
 
-// esquema de validação
+
 const SignupSchema = Yup.object().shape({
   email:    Yup.string().email('E-mail inválido').required('Obrigatório'),
   password: Yup.string().min(6, 'Pelo menos 6 caracteres').required('Obrigatório'),
@@ -17,16 +16,9 @@ export default function SignupScreen({ navigation }: any) {
   const dispatch = useAppDispatch()
 
   const handleSubmit = (values: { email: string; password: string }) => {
-    // por enquanto, só um console.log:
+
     console.log('signup form:', values)
 
-    // quando implementar o thunk:
-    // dispatch(signupThunk(values))
-    //   .unwrap()
-    //   .then(() => navigation.replace('App'))  // ou navegue para o tab
-    //   .catch(err => Alert.alert('Erro', err.message))
-
-    // simula sucesso:
     Alert.alert('Sucesso', 'Conta criada com sucesso!')
     navigation.replace('Login')
   }

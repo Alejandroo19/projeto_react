@@ -1,34 +1,67 @@
-// src/navigation/index.tsx
 import React from 'react'
-import { NavigationContainer } from '@react-navigation/native'
+import { NavigationContainer, DarkTheme as RNDark, DefaultTheme as RNLight } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import AuthStack from './AuthStack'
-import AppTabs   from './AppTabs'
-import TaskFormScreen from '../screens/TaskFormScreen'
 import { useAppSelector } from '../redux/Hooks'
+import { useTheme as useAppTheme } from '../context/ThemeContext'
+import { lightTheme, darkTheme } from '../styles/theme'
 
-const RootStack = createNativeStackNavigator()
+import AuthStack from './AuthStack'
+import AppTabs from './AppTabs'    // agora só importa as tabs
+import TaskFormScreen from '../screens/TaskFormScreen'
+
+const Stack = createNativeStackNavigator()
 
 export default function Navigator() {
-  const isAuth = !!useAppSelector(state => state.auth.token)
+  const token = useAppSelector(s => s.auth.token)
+  const isAuth = !!token
+  const { isDark } = useAppTheme()
+  const styledTheme = isDark ? darkTheme : lightTheme
+
+  const navTheme = isDark
+    ? {
+        ...RNDark,
+        colors: {
+          ...RNDark.colors,
+          background: styledTheme.colors.background,
+          card: styledTheme.colors.card,
+          text: styledTheme.colors.text,
+          primary: styledTheme.colors.primary,
+        }
+      }
+    : {
+        ...RNLight,
+        colors: {
+          ...RNLight.colors,
+          background: styledTheme.colors.background,
+          card: styledTheme.colors.card,
+          text: styledTheme.colors.text,
+          primary: styledTheme.colors.primary,
+        }
+      }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={navTheme}>
       {isAuth ? (
-        <RootStack.Navigator>
-          {/* A tela principal é seu TabNavigator */}
-          <RootStack.Screen
+        <Stack.Navigator
+          screenOptions={{
+            headerStyle: { backgroundColor: navTheme.colors.card },
+            headerTintColor: navTheme.colors.text,
+          }}
+        >
+          {/* A tela principal agora é seu AppTabs */}
+          <Stack.Screen
             name="Home"
             component={AppTabs}
             options={{ headerShown: false }}
           />
-          {/* Aqui registramos o formulário de tarefas */}
-          <RootStack.Screen
+
+          {/* Formulário de tarefa */}
+          <Stack.Screen
             name="TaskForm"
             component={TaskFormScreen}
-            options={{ title: 'Nova Tarefa' }}
+            options={{ title: 'Tarefa' }}
           />
-        </RootStack.Navigator>
+        </Stack.Navigator>
       ) : (
         <AuthStack />
       )}
